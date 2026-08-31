@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sector Call Sheet — Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◈</span>
+    <div class="brand-text">
+      <div class="brand-title">SECTOR CALL SHEET</div>
+      <div class="brand-sub">Live Yahoo Finance discovery · US markets only · nothing hardcoded</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input id="global-search-input" class="search-input" type="text" placeholder="Search any US ticker or company…" autocomplete="off">
+    <div id="search-suggestions" class="search-suggestions"></div>
+  </div>
+  <div class="topbar-actions">
+    <a href="/portfolio" class="btn-nav-link">PORTFOLIO ↗</a>
+    <span id="last-updated" class="last-updated">—</span>
+    <button id="rescan-btn" class="btn-rescan" title="Force Yahoo to re-discover which tickers qualify today (sectors, penny movers, dividend payers, ETFs) — otherwise refreshed automatically once every 24h">⟲ RESCAN UNIVERSE</button>
+    <div id="auto-refresh-main" class="auto-refresh-wrap"></div>
+    <button id="refresh-btn" class="btn-refresh">⟳ REFRESH PRICES</button>
+  </div>
+</header>
+
+<div id="quote-modal-backdrop" class="modal-backdrop">
+  <div class="modal-card" id="quote-modal-card"></div>
+</div>
+
+<div class="macro-strip" id="macro-strip"></div>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="main">Sector Leaders</button>
+  <button class="tab-btn" data-tab="penny">Penny Stock Radar</button>
+  <button class="tab-btn" data-tab="dividend">Dividend &amp; Income</button>
+</nav>
+
+<div class="tape-wrap" id="tape-wrap">
+  <div class="tape" id="tape"><span class="tape-loading">Loading sector picks…</span></div>
+</div>
+
+<main>
+
+  <!-- ===================== MAIN: Sector Leaders ===================== -->
+  <section class="panel-view active" data-panel="main">
+    <section class="callsheet-section">
+      <div class="section-head">
+        <h2>Call Sheet</h2>
+        <p>Today's strongest fundamental name in each sector. Tap <b>copy</b> to grab the talk-track before you dial.</p>
+      </div>
+      <div id="callsheet-grid-main" class="callsheet-grid">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </section>
+    <section class="detail-section">
+      <div class="section-head">
+        <h2>Sector Detail</h2>
+        <p>Every sub-industry, every covered ticker, 5-day price action and rating. Click a sector to expand.</p>
+      </div>
+      <div id="sector-accordion-main" class="sector-accordion"></div>
+    </section>
+  </section>
+
+  <!-- ===================== PENNY STOCK RADAR ===================== -->
+  <section class="panel-view" data-panel="penny">
+    <div class="mode-banner mode-banner-penny">
+      <b>Short-term momentum only — not a fundamentals call.</b> These are speculative,
+      low-priced, often thinly-traded names. Includes a live "Monthly Gainers" ladder —
+      real, measured trailing 1-month returns (10–30%, 30–50%, 50–70%, 70–100%,
+      100–200%, 200%+), no price ceiling, each stock sorted into the tier it actually
+      belongs in. Use for "what's moving today" conversation, always pair with a risk
+      warning, and confirm liquidity before a customer trades.
+    </div>
+    <section class="callsheet-section">
+      <div class="section-head">
+        <h2>Momentum Call Sheet</h2>
+        <p>The name with the strongest 5-day momentum + unusual volume in each theme.</p>
+      </div>
+      <div id="callsheet-grid-penny" class="callsheet-grid">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </section>
+    <section class="detail-section">
+      <div class="section-head">
+        <h2>Watchlist Detail</h2>
+        <p>Every name on the radar, grouped by theme.</p>
+      </div>
+      <div id="sector-accordion-penny" class="sector-accordion"></div>
+    </section>
+  </section>
+
+  <!-- ===================== DIVIDEND & INCOME DESK ===================== -->
+  <section class="panel-view" data-panel="dividend">
+    <section class="callsheet-section">
+      <div class="section-head">
+        <h2>Income Call Sheet</h2>
+        <p>Best yield-plus-stability combination per sector — for customers already invested and adding income exposure.</p>
+      </div>
+      <div id="callsheet-grid-dividend" class="callsheet-grid">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </section>
+    <section class="detail-section">
+      <div class="section-head">
+        <h2>High-Yield Dividend ETFs</h2>
+        <p>Grouped by payout frequency, each rated Strong Buy / Buy / Hold / Sell on the same scale as Sector Leaders.</p>
+      </div>
+      <div class="etf-subhead">Monthly Payers <span>— covered-call &amp; super-high-yield funds, built to pay every month</span></div>
+      <div id="etf-table-monthly"></div>
+      <div class="etf-subhead">Quarterly Payers <span>— classic quality/high-yield dividend-equity funds</span></div>
+      <div id="etf-table-quarterly"></div>
+      <div class="etf-subhead">Annual Payers <span>— true annual-only US ETFs are rare and modest-yield; included for completeness, not for high income</span></div>
+      <div id="etf-table-annual"></div>
+    </section>
+    <section class="detail-section">
+      <div class="section-head">
+        <h2>High-Yield / Option-Income ETF Families</h2>
+        <p>YieldMax, GraniteShares, Roundhill, Defiance, JPMorgan, Global X, NEOS and more — grouped by issuer/theme, each rated on yield <b>and</b> total return so a big headline number that's quietly losing NAV doesn't look like a "Strong Buy."</p>
+      </div>
+      <div class="mode-banner mode-banner-penny">
+        <b>These are meaningfully higher-risk than the ETF tables above.</b> Most are single-stock covered-call
+        or synthetic-income funds, or aggressive 0DTE index strategies — concentration, high volatility, and
+        NAV erosion are common even when the distribution looks huge. Better suited to customers explicitly
+        chasing high current income than to a conservative, capital-preservation retiree. Risk tier is shown
+        per family; tickers in this niche launch/close often, so verify before quoting one on a call.
+      </div>
+      <div id="etf-families-wrap">
+        <div class="skeleton-card"></div><div class="skeleton-card"></div>
+      </div>
+    </section>
+    <section class="detail-section">
+      <div class="section-head">
+        <h2>Sector Detail</h2>
+        <p>Every covered payer, sector by sector.</p>
+      </div>
+      <div id="sector-accordion-dividend" class="sector-accordion"></div>
+    </section>
+  </section>
+
+  <footer class="disclaimer">
+    Informational / screening tool only — not personalized investment advice. Ratings are a rules-based
+    composite of public data (fundamentals, momentum, volume, or income metrics depending on the tab), not
+    a substitute for your firm's research or compliance review. Penny-stock and dividend-ETF universes are
+    starter lists — verify and swap in your firm's approved coverage before relying on them with customers.
+    Verify figures before repeating them on a call.
+  </footer>
+</main>
+
+<script src="/static/search.js"></script>
+<script src="/static/autorefresh.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

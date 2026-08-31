@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Watchlist — Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◈</span>
+    <div class="brand-text">
+      <div class="brand-title">PORTFOLIO WATCHLIST</div>
+      <div class="brand-sub">Live-priced positions · money-weighted XIRR · SQLite-persisted</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input id="global-search-input" class="search-input" type="text" placeholder="Search any US ticker or company…" autocomplete="off">
+    <div id="search-suggestions" class="search-suggestions"></div>
+  </div>
+  <div class="topbar-actions">
+    <a href="/" class="btn-nav-link">← TERMINAL</a>
+    <span id="last-updated" class="last-updated">—</span>
+    <div id="auto-refresh-portfolio" class="auto-refresh-wrap"></div>
+    <button id="pf-refresh-btn" class="btn-refresh">⟳ REFRESH PRICES</button>
+  </div>
+</header>
+
+<div id="quote-modal-backdrop" class="modal-backdrop">
+  <div class="modal-card" id="quote-modal-card"></div>
+</div>
+
+<div class="pf-portfolio-bar">
+  <div class="pf-portfolio-select-wrap">
+    <select id="pf-portfolio-select"></select>
+    <button id="pf-rename-btn" class="pf-icon-btn" title="Rename this portfolio">Rename</button>
+  </div>
+  <div class="pf-portfolio-bar-actions">
+    <button id="pf-new-btn" class="pf-icon-btn">+ New Portfolio</button>
+    <button id="pf-export-btn" class="pf-icon-btn">Export CSV</button>
+    <button id="pf-clear-btn" class="pf-icon-btn danger">Clear</button>
+    <button id="pf-delete-btn" class="pf-icon-btn danger">Delete Portfolio</button>
+    <button id="pf-clear-history-btn" class="pf-icon-btn danger-strong">Clear History ⚠️</button>
+  </div>
+</div>
+
+<main>
+  <section class="callsheet-section">
+    <div class="section-head">
+      <h2>Portfolio Summary</h2>
+      <p>Realized gains from closed positions, unrealized gains from open ones, and a true money-weighted annualized return (XIRR) across every position's actual cash-flow dates.</p>
+    </div>
+    <div id="pf-summary-grid" class="pf-summary-grid">
+      <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+    </div>
+    <div id="pf-sector-alloc" class="pf-sector-alloc"></div>
+  </section>
+
+  <section class="detail-section">
+    <div class="section-head-row">
+      <div>
+        <h2>Positions</h2>
+        <p>Number of shares, buy price/date, live current price, and realized or unrealized gain — whichever applies.</p>
+      </div>
+      <button id="pf-add-btn" class="btn-add-position">+ ADD POSITION</button>
+    </div>
+
+    <div class="pf-filter-row">
+      <button class="pf-filter-btn active" data-filter="open">Open</button>
+      <button class="pf-filter-btn" data-filter="closed">Closed</button>
+      <button class="pf-filter-btn" data-filter="all">All</button>
+    </div>
+
+    <div id="pf-table-wrap">
+      <div class="skeleton-card"></div>
+    </div>
+  </section>
+
+  <section class="detail-section">
+    <div class="section-head">
+      <h2>Recent News</h2>
+      <p>1–2 recent real headlines per ticker you're holding — Yahoo's actual headlines (not AI-generated), refreshed automatically once a day.</p>
+    </div>
+    <div id="pf-news-wrap">
+      <div class="skeleton-card"></div>
+    </div>
+  </section>
+
+  <footer class="disclaimer">
+    Informational tracking tool only — not investment advice. "Annualized Return" for very short holding
+    periods (under ~30 days) is a mathematical extrapolation of a short-term move, not a realistic
+    expectation of future performance — treat it as a rate, not a forecast. Data is persisted locally in
+    <code>portfolio.db</code> next to this app; back that file up if you care about the history.
+  </footer>
+</main>
+
+<!-- Add / Edit Position Modal -->
+<div id="pf-modal-backdrop" class="modal-backdrop">
+  <div class="modal-card pf-modal-card">
+    <button class="modal-close-x" onclick="closePositionModal()">✕</button>
+    <div class="modal-section-title" id="pf-modal-title">Add Position</div>
+    <form id="pf-modal-form">
+      <input type="hidden" id="pf-form-id">
+      <div class="pf-form-grid">
+        <label>Ticker Symbol
+          <input type="text" id="pf-form-symbol" placeholder="e.g. AAPL" required>
+        </label>
+        <label>Number of Shares
+          <input type="number" id="pf-form-quantity" step="any" min="0.0001" required>
+        </label>
+        <label>Buy Price ($)
+          <input type="number" id="pf-form-buy-price" step="any" min="0.0001" required>
+        </label>
+        <label>Buy Date
+          <input type="date" id="pf-form-buy-date" required>
+        </label>
+        <label>Sell Price ($) <span class="pf-optional">— leave blank if still open</span>
+          <input type="number" id="pf-form-sell-price" step="any" min="0">
+        </label>
+        <label>Sell Date <span class="pf-optional">— leave blank if still open</span>
+          <input type="date" id="pf-form-sell-date">
+        </label>
+        <label class="pf-form-full">Notes <span class="pf-optional">— optional</span>
+          <input type="text" id="pf-form-notes" placeholder="e.g. conviction thesis, target price...">
+        </label>
+      </div>
+      <div class="pf-form-actions">
+        <span id="pf-form-error" class="pf-form-error"></span>
+        <button type="submit" class="btn-add-position">SAVE</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- New / Rename Portfolio Modal -->
+<div id="pf-name-modal-backdrop" class="modal-backdrop">
+  <div class="modal-card pf-name-modal-card">
+    <button class="modal-close-x" onclick="closeNameModal()">✕</button>
+    <div class="modal-section-title" id="pf-name-modal-title">New Portfolio</div>
+    <form id="pf-name-modal-form">
+      <input type="text" id="pf-name-input" class="pf-name-input" placeholder="e.g. Client - Retirement Account" required>
+      <div class="pf-form-actions">
+        <span id="pf-name-error" class="pf-form-error"></span>
+        <button type="submit" class="btn-add-position">SAVE</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/static/search.js"></script>
+<script src="/static/autorefresh.js"></script>
+<script src="/static/portfolio.js"></script>
+</body>
+</html>
