@@ -1,8 +1,8 @@
-# Sector Call Sheet
+# Sector Call Sheet - US Stock Terminal 
 
 A small local web terminal that scans US markets live via Yahoo Finance and surfaces
 the strongest name in each sector/theme/income bucket — with a plain-English reason
-you can read straight to a customer on a call.
+you can read straight and understand.
 
 **Nothing is a fixed stock list.** Every universe — which companies belong to which
 sector, which sub-$5 names are actually moving today, which stocks are actually
@@ -12,6 +12,21 @@ once a day (cached 24h so you're not hammering Yahoo's rate limits; hit **Rescan
 Universe** to force it sooner). Only the *prices and fundamentals* for those
 discovered tickers refresh more often (every 20 min, or on demand via **Refresh
 Prices**).
+
+## Setup
+
+```bash
+cd stock-terminal
+pip install -r requirements.txt
+python app.py
+```
+
+Then open **http://127.0.0.1:5000** for the sector/penny/dividend terminal, or
+**http://127.0.0.1:5000/portfolio** for the Portfolio Watchlist. Both pages share
+the same search bar (top of the page) for looking up any ticker in a detail modal.
+First load of the main terminal takes 30–90 seconds — it's live-discovering
+~150-250 tickers across sectors, industries, momentum screens, dividend
+screens, and ETF categories, then pulling price/fundamentals for all of them.
 
 ## How the discovery works
 
@@ -236,25 +251,12 @@ fabricate one, the tool shows its own composite **Rating** (Strong Buy/Buy/Hold/
 clearly labeled as that — not a stand-in for real analyst coverage.
 
 **Suitability flag:** these products are a meaningfully different risk profile than
-the broad dividend ETFs above them — built for customers explicitly chasing high
+the broad dividend ETFs above them — built for the ones explicitly chasing high
 current income, not for a conservative, capital-preservation-focused retiree. Worth
 weighing that before using this section with the "already invested, stability-
 seeking" persona from the Dividend & Income tab's original design.
 
-## Setup
 
-```bash
-cd stock-terminal
-pip install -r requirements.txt
-python app.py
-```
-
-Then open **http://127.0.0.1:5000** for the sector/penny/dividend terminal, or
-**http://127.0.0.1:5000/portfolio** for the Portfolio Watchlist. Both pages share
-the same search bar (top of the page) for looking up any ticker in a detail modal.
-First load of the main terminal takes 30–90 seconds — it's live-discovering
-~150-250 tickers across sectors, industries, momentum screens, dividend
-screens, and ETF categories, then pulling price/fundamentals for all of them.
 
 ## The three tabs
 
@@ -264,7 +266,7 @@ Scores every discovered ticker **within its own sector** (0–100) on: valuation
 (liquidity/solvency), analyst consensus, price-target upside, and 5-day momentum.
 Rating: **Strong Buy / Buy / Hold / Sell**.
 
-### 2. Penny Stock Radar — for younger/first-time customers, short-term stories
+### 2. Penny Stock Radar — for younger/first-time YOU, short-term stories
 Purely **short-term technical** scoring: 5-day momentum, volume vs. its own average
 (catches unusual activity), and where price sits in its 52-week range — deliberately
 not a fundamentals score, since most of these names don't have mature fundamentals to
@@ -272,7 +274,7 @@ score. Ratings use different language on purpose — **Hot / Building / Neutral 
 Cooling** — so this never reads as an investment recommendation. Every card carries a
 built-in risk line (liquidity, volatility, "size and stop it").
 
-### 3. Dividend & Income Desk — for retired/already-invested customers
+### 3. Dividend & Income Desk — for retired/already-invested,
 Scores **yield quality** (peaks around ~5.5% — a double-digit headline yield actually
 scores worse, since that's usually a distress signal), payout-ratio sustainability,
 beta stability, and 5-day capital-value momentum. Rating: **Strong Income Pick /
@@ -327,9 +329,8 @@ Everything tunable lives near the top of `app.py`:
 
 - **This is a screening tool, not investment advice**, on every tab. It mechanically
   ranks live public data — it doesn't know about news, litigation, guidance changes,
-  or your firm's actual research. Always sanity-check the pick before repeating it to
-  a customer, and follow your compliance requirements for what can be said on a sales
-  call — this applies with extra force to the Penny Stock Radar.
+  or your firm's actual research. 
+  This is to give you a jump-start of the strongest opportunity within the sectors. 
 - Yahoo's screener/sector endpoints are unofficial and can occasionally change shape
   or rate-limit you; the fallback lists exist so the app degrades gracefully rather
   than breaking, but if you see a lot of "No data — try Refresh", wait a minute and
