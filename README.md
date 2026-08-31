@@ -1,3 +1,5 @@
+[![Python CI](https://github.com/habibjubair/stock-terminal/actions/workflows/python.yml/badge.svg)](https://github.com/habibjubair/stock-terminal/actions/workflows/python.yml)
+
 # Sector Call Sheet - US Stock Terminal 
 
 A small local web terminal that scans US markets live via Yahoo Finance and surfaces
